@@ -9,6 +9,9 @@ import (
 	"syscall"
 )
 
+func run() {
+}
+
 func Subscriber() {
 	log.Println("Running subscriber...")
 
@@ -24,9 +27,10 @@ func Subscriber() {
 		go func(shutdownChannel chan struct{}, wg *sync.WaitGroup, i int) {
 			log.Println("Starting goroutine: ", i)
 			defer wg.Done()
-			log.Println("passing1")
-			// ここでsubscribeする
+			// ここでsqsをsubscribeする
+			run()
 
+			// shutdown signal を受け取るまでループし続ける
 			for {
 				select {
 				case <-shutdownChannel:
