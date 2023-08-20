@@ -25,7 +25,7 @@ func main() {
 	if mode == "publisher" {
 		publisher.Publisher(ctx, env)
 	} else if mode == "subscriber" {
-		subscriber.Subscriber()
+		subscriber.Subscriber(ctx, env)
 	} else {
 		log.Println("Invalid argument passed")
 		os.Exit(1)

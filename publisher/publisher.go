@@ -36,6 +36,7 @@ func Publisher(ctx context.Context, env env.Env) {
 	}
 	messageBodyStr := string(messageBody)
 
+	// メッセージがどういう処理で使うものなのかは、MessageAttributesを使ってみても良いかもしれない
 	_, err = client.SendMessage(ctx, &sqs.SendMessageInput{
 		QueueUrl:               aws.String(env.QueueURL),
 		MessageBody:            aws.String(messageBodyStr),
