@@ -5,7 +5,6 @@ import (
 	"Sa2/sqs-pubsub/env"
 	"Sa2/sqs-pubsub/sqsinterface"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -114,6 +113,5 @@ type sqsDeleteMessageAPI interface {
 }
 
 func deleteMessage(ctx context.Context, client sqsDeleteMessageAPI, dMInput *sqs.DeleteMessageInput) (*sqs.DeleteMessageOutput, error) {
-	fmt.Println("Deleting message...", *dMInput.ReceiptHandle)
 	return client.DeleteMessage(ctx, dMInput)
 }
