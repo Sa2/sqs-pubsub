@@ -5,6 +5,7 @@ import (
 	"Sa2/sqs-pubsub/env"
 	"Sa2/sqs-pubsub/sqsinterface"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -25,12 +26,16 @@ func run(ctx context.Context, goroutineID int, env env.Env) {
 		log.Fatal(err)
 		return
 	}
+	// configにする
+	timeout := int32(20)
 
 	client := sqs.NewFromConfig(awscfg)
 
 	sqsReceiveParam := &sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(env.QueueURL),
 		MaxNumberOfMessages: 1,
+		VisibilityTimeout:   timeout,
+		WaitTimeSeconds:     timeout,
 	}
 	msgResult, err := client.ReceiveMessage(ctx, sqsReceiveParam)
 	if err != nil {
@@ -39,22 +44,24 @@ func run(ctx context.Context, goroutineID int, env env.Env) {
 	}
 
 	if msgResult.Messages != nil {
-		sqsMessage, err := sqsinterface.GetSQSMessageFromSQSResBody(ctx, msgResult.Messages[0].Body)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
+		for _, msg := range msgResult.Messages {
+			sqsMessage, err := sqsinterface.GetSQSMessageFromSQSResBody(ctx, msg.Body)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
 
-		// 実処理へ
-		resolver(sqsMessage)
-		// 処理が完了時はここでメッセージを削除する
-
-		_, err = deleteMessage(ctx, client, &sqs.DeleteMessageInput{
-			QueueUrl:      aws.String(env.QueueURL),
-			ReceiptHandle: msgResult.Messages[0].ReceiptHandle,
-		})
-		if err != nil {
-			log.Fatal(err)
+			// 実処理へ
+			resolver(sqsMessage)
+			// 処理が完了時はここでメッセージを削除する
+			_, err = deleteMessage(ctx, client, &sqs.DeleteMessageInput{
+				QueueUrl:      aws.String(env.QueueURL),
+				ReceiptHandle: msg.ReceiptHandle,
+			})
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
 		}
 
 	}
@@ -82,6 +89,7 @@ func Subscriber(ctx context.Context, env env.Env) {
 			// shutdown signal を受け取るまでループし続ける
 			for {
 				run(ctx, i, env)
+				fmt.Println("running")
 				select {
 				case <-shutdownChannel:
 					log.Println("Shutdown goroutine: ", i)
